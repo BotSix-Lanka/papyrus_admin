@@ -1,101 +1,121 @@
-"use client"
+"use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/app/components/ui/card"
-import { Button } from "@/app/components/ui/button"
-import { TrendingUp, Eye, Heart, Star } from "lucide-react"
+import { useState, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/app/components/ui/card";
+import { Button } from "@/app/components/ui/button";
+import { TrendingUp, Eye, Heart, Star } from "lucide-react";
 
-const trendingBooks = [
-  {
-    id: 1,
-    title: "The Midnight Library",
-    author: "Matt Haig",
-    category: "Fiction",
-    views: 15420,
-    likes: 3420,
-    rating: 4.5,
-    trend: "+15%",
-    cover: "📚"
-  },
-  {
-    id: 2,
-    title: "Atomic Habits",
-    author: "James Clear",
-    category: "Self-Help",
-    views: 12850,
-    likes: 2980,
-    rating: 4.8,
-    trend: "+12%",
-    cover: "📖"
-  },
-  {
-    id: 3,
-    title: "The Seven Husbands of Evelyn Hugo",
-    author: "Taylor Jenkins Reid",
-    category: "Romance",
-    views: 11230,
-    likes: 2650,
-    rating: 4.3,
-    trend: "+18%",
-    cover: "💕"
-  },
-  {
-    id: 4,
-    title: "Project Hail Mary",
-    author: "Andy Weir",
-    category: "Science Fiction",
-    views: 9870,
-    likes: 2100,
-    rating: 4.6,
-    trend: "+22%",
-    cover: "🚀"
-  },
-  {
-    id: 5,
-    title: "The Psychology of Money",
-    author: "Morgan Housel",
-    category: "Finance",
-    views: 8760,
-    likes: 1890,
-    rating: 4.4,
-    trend: "+8%",
-    cover: "💰"
-  },
-  {
-    id: 6,
-    title: "Klara and the Sun",
-    author: "Kazuo Ishiguro",
-    category: "Literary Fiction",
-    views: 7650,
-    likes: 1650,
-    rating: 4.2,
-    trend: "+25%",
-    cover: "☀️"
-  },
-  {
-    id: 7,
-    title: "The Four Winds",
-    author: "Kristin Hannah",
-    category: "Historical Fiction",
-    views: 6980,
-    likes: 1520,
-    rating: 4.1,
-    trend: "+10%",
-    cover: "🌾"
-  },
-  {
-    id: 8,
-    title: "Think Again",
-    author: "Adam Grant",
-    category: "Psychology",
-    views: 6230,
-    likes: 1380,
-    rating: 4.7,
-    trend: "+16%",
-    cover: "🧠"
-  }
-]
+interface Chapter {
+  id: string;
+  title: string;
+  likes: number;
+  views: number;
+}
+
+interface Book {
+  id: string;
+  title: string;
+  author: string;
+  category: string;
+  coverImage?: string;
+  trendingScore: number;
+  viewCount: number;
+  likes: number;
+  chapters: Chapter[];
+  tags: string[];
+  backgroundMusic: string;
+  description: string;
+  published: boolean;
+  userId: string;
+  createdAt: string;
+  updatedAt: string;
+  user: {
+    userId: string;
+    username: string;
+  };
+}
+
+interface Stats {
+  totalViews: number;
+  totalLikes: number;
+  averageRating: number;
+}
 
 export default function TrendingBooksPage() {
+  const [trendingBooks, setTrendingBooks] = useState<Book[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [selectedBook, setSelectedBook] = useState<Book | null>(null); // Selected book state for modal
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const res = await fetch("https://api.papyruslk.com/api/books/trending"); // 🔗 placeholder
+        if (!res.ok) throw new Error("Failed to fetch");
+        const data = await res.json();
+
+        setTrendingBooks(data);
+
+        const totalViews = data.reduce(
+          (acc: number, book: Book) =>
+            acc +
+            book.chapters.reduce(
+              (sum: number, chapter: Chapter) => sum + chapter.views,
+              0
+            ),
+          0
+        );
+        const totalLikes = data.reduce(
+          (acc: number, book: Book) =>
+            acc +
+            book.chapters.reduce(
+              (sum: number, chapter: Chapter) => sum + chapter.likes,
+              0
+            ),
+          0
+        );
+
+        const averageRating =
+          data.reduce((acc: number, book: Book) => {
+            const totalChapterLikes = book.chapters.reduce(
+              (sum: number, chapter: Chapter) => sum + chapter.likes,
+              0
+            );
+            return acc + totalChapterLikes / book.chapters.length;
+          }, 0) / data.length;
+
+        setStats({
+          totalViews,
+          totalLikes,
+          averageRating: Number(averageRating.toFixed(2)),
+        });
+      } catch (err: any) {
+        setError(err.message || "Something went wrong");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const handleBookClick = (book: Book) => {
+    setSelectedBook(book);
+  };
+
+  const closeModal = () => {
+    setSelectedBook(null);
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -112,79 +132,123 @@ export default function TrendingBooksPage() {
             Trending Books This Week
           </CardTitle>
           <CardDescription>
-            Books with the highest engagement and growth in views, likes, and ratings.
+            Books with the highest engagement and growth in views, likes, and
+            ratings.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left py-3 px-4 font-medium">Book</th>
-                  <th className="text-left py-3 px-4 font-medium">Author</th>
-                  <th className="text-left py-3 px-4 font-medium">Category</th>
-                  <th className="text-left py-3 px-4 font-medium">Views</th>
-                  <th className="text-left py-3 px-4 font-medium">Likes</th>
-                  <th className="text-left py-3 px-4 font-medium">Rating</th>
-                  <th className="text-left py-3 px-4 font-medium">Trend</th>
-                  <th className="text-left py-3 px-4 font-medium">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {trendingBooks.map((book) => (
-                  <tr key={book.id} className="border-b hover:bg-gray-50">
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-3">
-                        <div className="text-2xl">{book.cover}</div>
-                        <div>
-                          <div className="font-medium">{book.title}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-3 px-4 text-sm text-gray-600">{book.author}</td>
-                    <td className="py-3 px-4">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        {book.category}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-1">
-                        <Eye className="h-4 w-4 text-gray-400" />
-                        <span className="text-sm">{book.views.toLocaleString()}</span>
-                      </div>
-                    </td>
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-1">
-                        <Heart className="h-4 w-4 text-red-400" />
-                        <span className="text-sm">{book.likes.toLocaleString()}</span>
-                      </div>
-                    </td>
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-1">
-                        <Star className="h-4 w-4 text-yellow-400 fill-current" />
-                        <span className="text-sm">{book.rating}</span>
-                      </div>
-                    </td>
-                    <td className="py-3 px-4">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        {book.trend}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4">
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm">
-                          View Details
-                        </Button>
-                        <Button variant="outline" size="sm">
-                          Edit
-                        </Button>
-                      </div>
-                    </td>
+          {loading ? (
+            <p className="text-sm text-gray-500">Loading books...</p>
+          ) : error ? (
+            <p className="text-sm text-red-500">Error: {error}</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left py-3 px-4 font-medium">Book</th>
+                    <th className="text-left py-3 px-4 font-medium">Author</th>
+                    <th className="text-left py-3 px-4 font-medium">
+                      Category
+                    </th>
+                    <th className="text-left py-3 px-4 font-medium">Views</th>
+                    <th className="text-left py-3 px-4 font-medium">Likes</th>
+                    <th className="text-left py-3 px-4 font-medium">Trend</th>
+                    <th className="text-left py-3 px-4 font-medium">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {trendingBooks.map((book) => (
+                    <tr key={book.id} className="border-b hover:bg-gray-50">
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12">
+                            {book.coverImage ? (
+                              <img
+                                src={`https://api.papyruslk.com${book.coverImage}`}
+                                className=" rounded-lg"
+                              />
+                            ) : (
+                              "📘"
+                            )}
+                          </div>
+                          <div>
+                            <div
+                              className="font-medium cursor-pointer text-blue-500 hover:underline"
+                              onClick={() => handleBookClick(book)}
+                            >
+                              {book.title}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 text-sm text-gray-600">
+                        {book.user.username}
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="flex flex-wrap gap-2">
+                          {book.categories.map((category) => (
+                            <span
+                              key={category.id}
+                              className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                            >
+                              {category.name}
+                            </span>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-1">
+                          <Eye className="h-4 w-4 text-gray-400" />
+                          <span className="text-sm">
+                            {book.chapters
+                              .reduce(
+                                (sum: number, chapter: Chapter) =>
+                                  sum + chapter.views,
+                                0
+                              )
+                              .toLocaleString()}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-1">
+                          <Heart className="h-4 w-4 text-red-400" />
+                          <span className="text-sm">
+                            {book.chapters
+                              .reduce(
+                                (sum: number, chapter: Chapter) =>
+                                  sum + chapter.likes,
+                                0
+                              )
+                              .toLocaleString()}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          {book.trendingScore}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="flex gap-2">
+                          <Button
+                            onClick={() => {
+                              handleBookClick(book);
+                            }}
+                            variant="outline"
+                            size="sm"
+                          >
+                            View Details
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -196,9 +260,11 @@ export default function TrendingBooksPage() {
             <Eye className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">89,580</div>
+            <div className="text-2xl font-bold">
+              {stats?.totalViews.toLocaleString() ?? "Loading..."}
+            </div>
             <p className="text-xs text-muted-foreground">
-              +12% from last week
+              {stats ? `` : "Loading..."}
             </p>
           </CardContent>
         </Card>
@@ -209,26 +275,53 @@ export default function TrendingBooksPage() {
             <Heart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">17,580</div>
+            <div className="text-2xl font-bold">
+              {stats?.totalLikes.toLocaleString() ?? "Loading..."}
+            </div>
             <p className="text-xs text-muted-foreground">
-              +8% from last week
+              {stats ? `` : "Loading..."}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Average Rating</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Average Likes Per Book
+            </CardTitle>
             <Star className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">4.45</div>
+            <div className="text-2xl font-bold">
+              {stats?.averageRating ?? "Loading..."}
+            </div>
             <p className="text-xs text-muted-foreground">
-              +0.2 from last week
+              {stats ? `` : "Loading..."}
             </p>
           </CardContent>
         </Card>
       </div>
+
+      {/* Modal for Book Details */}
+      {selectedBook && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
+          <div className="bg-white p-6 rounded-lg w-96">
+            <h2 className="text-2xl font-semibold">{selectedBook.title}</h2>
+            <p className="mt-2">{selectedBook.description}</p>
+            <h3 className="mt-4 text-xl">Chapters</h3>
+            <ul className="list-disc pl-5">
+              {selectedBook.chapters.map((chapter) => (
+                <li key={chapter.id}>{chapter.title}</li>
+              ))}
+            </ul>
+            <div className="mt-4 flex justify-end">
+              <Button variant="outline" onClick={closeModal}>
+                Close
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
-  )
-} 
+  );
+}
