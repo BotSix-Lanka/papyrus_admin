@@ -18,11 +18,16 @@ interface Chapter {
   views: number;
 }
 
+interface Categories {
+  id: string;
+  name: string;
+}
+
 interface Book {
   id: string;
   title: string;
   author: string;
-  category: string;
+  categories: Categories[];
   coverImage?: string;
   trendingScore: number;
   viewCount: number;
