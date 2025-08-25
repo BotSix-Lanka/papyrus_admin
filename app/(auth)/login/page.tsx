@@ -195,7 +195,7 @@ export default function LoginPage() {
               </div>
             </div> */}
 
-            <div className="mt-6 text-center">
+            {/* <div className="mt-6 text-center">
               <p className="text-sm text-gray-600">
                 Don&apos;t have an account?{" "}
                 <Link
@@ -205,7 +205,7 @@ export default function LoginPage() {
                   Sign up
                 </Link>
               </p>
-            </div>
+            </div> */}
           </CardContent>
         </Card>
       </div>

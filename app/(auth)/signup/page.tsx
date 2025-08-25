@@ -93,7 +93,7 @@ export default function SignupPage() {
               Enter your information to create an admin account
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          {/* <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               {error && (
                 <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
@@ -305,7 +305,13 @@ export default function SignupPage() {
                 </Link>
               </p>
             </div>
-          </CardContent>
+          </CardContent> */}
+          <div className="text-center">
+            Signup is Disabled for Security registrations Contact Devloper Or
+            Admin_Ashan for Neew Accounts
+          </div>
+
+          <div>Have and Account ? </div>
         </Card>
       </div>
     </div>
